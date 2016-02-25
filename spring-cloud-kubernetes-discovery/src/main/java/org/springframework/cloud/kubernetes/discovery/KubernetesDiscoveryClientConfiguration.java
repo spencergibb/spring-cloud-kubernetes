@@ -23,6 +23,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+
 /**
  * @author Spencer Gibb
  */
@@ -32,16 +35,28 @@ import org.springframework.context.annotation.Configuration;
 public class KubernetesDiscoveryClientConfiguration {
 
 	@Bean
+	@ConditionalOnMissingBean
+	public KubernetesClient kubernetesClient(KubernetesProperties properties) {
+		return new DefaultKubernetesClient(properties.toConfig());
+	}
+
+	@Bean
 	public KubernetesDiscoveryProperties kubernetesDiscoveryProperties() {
 		return new KubernetesDiscoveryProperties();
 	}
 
 	@Bean
+	public KubernetesProperties kubernetesProperties() {
+		return new KubernetesProperties();
+	}
+
+	@Bean
 	@ConditionalOnMissingBean
 	public KubernetesDiscoveryClient kubernetesDiscoveryClient(
+			KubernetesClient kubernetesClient,
 			ServerProperties serverProperties,
 			KubernetesDiscoveryProperties discoveryProperties) {
-		return new KubernetesDiscoveryClient(
+		return new KubernetesDiscoveryClient(kubernetesClient,
 				discoveryProperties, serverProperties);
 	}
 }

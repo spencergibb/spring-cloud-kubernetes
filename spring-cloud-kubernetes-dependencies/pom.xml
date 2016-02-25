@@ -16,6 +16,7 @@
 	<properties>
 		<spring-cloud-commons.version>1.1.0.BUILD-SNAPSHOT</spring-cloud-commons.version>
 		<spring-cloud-netflix.version>1.1.0.BUILD-SNAPSHOT</spring-cloud-netflix.version>
+		<kubernetes-api.version>2.2.96</kubernetes-api.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -45,6 +46,17 @@
 				<version>${spring-cloud-netflix.version}</version>
 				<scope>import</scope>
 				<type>pom</type>
+			</dependency>
+			<dependency>
+				<groupId>io.fabric8</groupId>
+				<artifactId>kubernetes-api</artifactId>
+				<version>${kubernetes-api.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.fabric8</groupId>
+						<artifactId>openshift-client</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

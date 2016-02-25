@@ -9,6 +9,9 @@ include::intro.adoc[]
 [[spring-cloud-kubernetes-install]]
 == Install Kubernetes
 TODO:
+http://kubernetes.io/v1.1/docs/getting-started-guides/vagrant.html
+export KUBERNETES_PROVIDER=vagrant
+curl -sS https://get.k8s.io | bash
 
 [[spring-cloud-kubernetes-discovery]]
 == Service Discovery with Kubernetes

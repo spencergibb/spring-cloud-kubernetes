@@ -21,16 +21,20 @@ import java.util.List;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.AbstractServerList;
 
+import io.fabric8.kubernetes.client.KubernetesClient;
+
 /**
  * @author Spencer Gibb
  */
 public class KubernetesServerList extends AbstractServerList<KubernetesServer> {
 
+	private final KubernetesClient kubernetes;
 	private final KubernetesDiscoveryProperties properties;
 
 	private String serviceId;
 
-	public KubernetesServerList(KubernetesDiscoveryProperties properties) {
+	public KubernetesServerList(KubernetesClient kubernetes, KubernetesDiscoveryProperties properties) {
+		this.kubernetes = kubernetes;
 		this.properties = properties;
 	}
 

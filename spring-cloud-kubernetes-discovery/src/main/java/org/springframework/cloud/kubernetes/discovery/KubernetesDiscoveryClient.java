@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 
+import io.fabric8.kubernetes.client.KubernetesClient;
 import lombok.extern.apachecommons.CommonsLog;
 
 /**
@@ -31,11 +32,13 @@ import lombok.extern.apachecommons.CommonsLog;
 @CommonsLog
 public class KubernetesDiscoveryClient implements DiscoveryClient {
 
+	private KubernetesClient kubernetes;
 	private KubernetesDiscoveryProperties properties;
 	private ServerProperties serverProperties;
 
 	public KubernetesDiscoveryClient(
-			KubernetesDiscoveryProperties properties, ServerProperties serverProperties) {
+			KubernetesClient kubernetes, KubernetesDiscoveryProperties properties, ServerProperties serverProperties) {
+		this.kubernetes = kubernetes;
 		this.properties = properties;
 		this.serverProperties = serverProperties;
 	}

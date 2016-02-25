@@ -30,16 +30,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.fabric8.kubernetes.client.KubernetesClient;
+
 import static com.netflix.client.config.CommonClientConfigKey.DeploymentContextBasedVipAddresses;
 import static com.netflix.client.config.CommonClientConfigKey.EnableZoneAffinity;
 
 /**
- * Preprocessor that configures defaults for Kubernetes-discovered ribbon clients. Such as:
- * <code>@zone</code>, NIWSServerListClassName, DeploymentContextBasedVipAddresses,
- * NFLoadBalancerRuleClassName, NIWSServerListFilterClassName and more
- *
  * @author Spencer Gibb
- * @author Dave Syer
  */
 @Configuration
 public class KubernetesRibbonClientConfiguration {
@@ -54,14 +51,11 @@ public class KubernetesRibbonClientConfiguration {
 	public KubernetesRibbonClientConfiguration() {
 	}
 
-	public KubernetesRibbonClientConfiguration(String serviceId) {
-		this.serviceId = serviceId;
-	}
-
 	@Bean
 	@ConditionalOnMissingBean
-	public ServerList<?> ribbonServerList(IClientConfig config, KubernetesDiscoveryProperties properties) {
-		KubernetesServerList serverList = new KubernetesServerList(properties);
+	public ServerList<?> ribbonServerList(KubernetesClient kubernetes,
+			IClientConfig config, KubernetesDiscoveryProperties properties) {
+		KubernetesServerList serverList = new KubernetesServerList(kubernetes, properties);
 		serverList.initWithNiwsConfig(config);
 		return serverList;
 	}
