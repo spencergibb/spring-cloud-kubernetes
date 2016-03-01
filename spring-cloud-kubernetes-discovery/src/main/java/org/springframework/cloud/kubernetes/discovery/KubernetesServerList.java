@@ -64,8 +64,7 @@ public class KubernetesServerList extends AbstractServerList<KubernetesServer> {
 		if (this.kubernetes == null) {
 			return Collections.emptyList();
 		}
-		EndpointsList endpointsList = this.kubernetes.endpoints().list();
-
+		EndpointsList endpointsList = this.kubernetes.endpoints().withField("metadata.name", this.serviceId).list();
 		if (endpointsList == null || endpointsList.getItems().isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -74,12 +73,14 @@ public class KubernetesServerList extends AbstractServerList<KubernetesServer> {
 
 		for (Endpoints endpoints : endpointsList.getItems()) {
 			String name = endpoints.getMetadata().getName();
-			if (this.serviceId.equals(name)) { //TODO: filter on query?
-				EndpointSubset subset = endpoints.getSubsets().iterator().next();
-				EndpointAddress address = subset.getAddresses().iterator().next();
-				EndpointPort port = subset.getPorts().iterator().next();
-				String uid = endpoints.getMetadata().getUid();
-				servers.add(new KubernetesServer(address.getIp(), port.getPort(), name, uid));
+			String uid = endpoints.getMetadata().getUid();
+
+			for (EndpointSubset subset : endpoints.getSubsets()) {
+				for (int i = 0; i < subset.getAddresses().size(); i++ ) {
+					EndpointAddress address = subset.getAddresses().get(i);
+					EndpointPort port = subset.getPorts().get(i);
+					servers.add(new KubernetesServer(address.getIp(), port.getPort(), name, uid));
+				}
 			}
 		}
 		return servers;
@@ -93,3 +94,4 @@ public class KubernetesServerList extends AbstractServerList<KubernetesServer> {
 		return sb.toString();
 	}
 }
+
