@@ -25,12 +25,12 @@ public class KubernetesServer extends Server {
 
 	private final MetaInfo metaInfo;
 
-	public KubernetesServer() {
-		super(null, 0); //TODO: findHost(healthService), healthService.getService().getPort());
+	public KubernetesServer(final String host, int port, final String appName, final String instanceId) {
+		super(host, port);
 		this.metaInfo = new MetaInfo() {
 			@Override
 			public String getAppName() {
-				return null; //TODO:service.getService().getService();
+				return appName;
 			}
 
 			@Override
@@ -45,7 +45,7 @@ public class KubernetesServer extends Server {
 
 			@Override
 			public String getInstanceId() {
-				return null; //TODO: service.getService().getId();
+				return instanceId;
 			}
 		};
 	}

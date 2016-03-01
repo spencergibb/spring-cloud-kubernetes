@@ -16,11 +16,18 @@
 
 package org.springframework.cloud.kubernetes.discovery;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.AbstractServerList;
 
+import io.fabric8.kubernetes.api.model.EndpointAddress;
+import io.fabric8.kubernetes.api.model.EndpointPort;
+import io.fabric8.kubernetes.api.model.EndpointSubset;
+import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.EndpointsList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
 /**
@@ -54,21 +61,28 @@ public class KubernetesServerList extends AbstractServerList<KubernetesServer> {
 	}
 
 	private List<KubernetesServer> getServers() {
-		/*TODO: if (this.client == null) {
+		if (this.kubernetes == null) {
 			return Collections.emptyList();
 		}
-		Response<List<HealthService>> response = this.client.getHealthServices(
-				this.serviceId, tag, this.properties.isQueryPassing(),
-				QueryParams.DEFAULT);
-		if (response.getValue() == null || response.getValue().isEmpty()) {
+		EndpointsList endpointsList = this.kubernetes.endpoints().list();
+
+		if (endpointsList == null || endpointsList.getItems().isEmpty()) {
 			return Collections.emptyList();
 		}
+
 		List<KubernetesServer> servers = new ArrayList<>();
-		for (HealthService service : response.getValue()) {
-			servers.add(new KubernetesServer(service));
+
+		for (Endpoints endpoints : endpointsList.getItems()) {
+			String name = endpoints.getMetadata().getName();
+			if (this.serviceId.equals(name)) { //TODO: filter on query?
+				EndpointSubset subset = endpoints.getSubsets().iterator().next();
+				EndpointAddress address = subset.getAddresses().iterator().next();
+				EndpointPort port = subset.getPorts().iterator().next();
+				String uid = endpoints.getMetadata().getUid();
+				servers.add(new KubernetesServer(address.getIp(), port.getPort(), name, uid));
+			}
 		}
-		return servers;*/
-		return null;
+		return servers;
 	}
 
 	@Override

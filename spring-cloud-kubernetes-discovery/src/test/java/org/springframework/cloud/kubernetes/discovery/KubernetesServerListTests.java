@@ -16,7 +16,17 @@
 
 package org.springframework.cloud.kubernetes.discovery;
 
+import java.util.List;
+
+import com.netflix.client.config.DefaultClientConfigImpl;
+
 import org.junit.Test;
+
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Spencer Gibb
@@ -25,5 +35,20 @@ public class KubernetesServerListTests {
 
 	@Test
 	public void serverListWorks() {
+		KubernetesProperties properties = new KubernetesProperties();
+		properties.setMasterUrl("http://192.168.64.2:8080");
+		KubernetesServerList serverList = new KubernetesServerList(new DefaultKubernetesClient(properties.toConfig()), new KubernetesDiscoveryProperties());
+
+		DefaultClientConfigImpl config = new DefaultClientConfigImpl();
+		config.setClientName("kubernetes");
+
+		serverList.initWithNiwsConfig(config);
+
+		List<KubernetesServer> servers = serverList.getInitialListOfServers();
+
+		assertThat("servers was wrong size", servers, hasSize(1));
+
+		KubernetesServer server = servers.get(0);
+		assertThat("server was wrong", server.getPort(), is(6443));
 	}
 }

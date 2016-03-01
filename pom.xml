@@ -30,6 +30,7 @@
 		<module>spring-cloud-kubernetes-dependencies</module>
 		<module>spring-cloud-kubernetes-discovery</module>
 		<module>spring-cloud-starter-kubernetes-discovery</module>
+		<module>spring-cloud-kubernetes-sample</module>
 		<module>docs</module>
 	</modules>
 
