@@ -38,6 +38,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = KubernetesDiscoveryClientTests.MyTestConfig.class)
 @WebIntegrationTest(value = {"spring.application.name=testKubernetesDiscovery",
+		"kubernetes.masterUrl=http://192.168.64.2:8080",
 		"spring.cloud.kubernetes.discovery.preferIpAddress=true"}, randomPort = true)
 public class KubernetesDiscoveryClientTests {
 

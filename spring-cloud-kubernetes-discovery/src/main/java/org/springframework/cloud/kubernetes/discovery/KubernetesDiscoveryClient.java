@@ -18,11 +18,21 @@ package org.springframework.cloud.kubernetes.discovery;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
+import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.ApplicationListener;
 
+import io.fabric8.kubernetes.api.model.EndpointAddress;
+import io.fabric8.kubernetes.api.model.EndpointPort;
+import io.fabric8.kubernetes.api.model.EndpointSubset;
+import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.EndpointsList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import lombok.extern.apachecommons.CommonsLog;
 
@@ -30,11 +40,19 @@ import lombok.extern.apachecommons.CommonsLog;
  * @author Spencer Gibb
  */
 @CommonsLog
-public class KubernetesDiscoveryClient implements DiscoveryClient {
+public class KubernetesDiscoveryClient implements DiscoveryClient, ApplicationListener<EmbeddedServletContainerInitializedEvent> {
 
 	private KubernetesClient kubernetes;
 	private KubernetesDiscoveryProperties properties;
 	private ServerProperties serverProperties;
+
+	@Value("${spring.application.name:application}")
+	private String appName;
+
+	@Value("${spring.cloud.client.ipAddress:127.0.0.1}")
+	private String ipAddress;
+
+	private AtomicInteger port = new AtomicInteger(0);
 
 	public KubernetesDiscoveryClient(
 			KubernetesClient kubernetes, KubernetesDiscoveryProperties properties, ServerProperties serverProperties) {
@@ -50,35 +68,63 @@ public class KubernetesDiscoveryClient implements DiscoveryClient {
 
 	@Override
 	public ServiceInstance getLocalServiceInstance() {
-		//TODO: return new DefaultServiceInstance(serviceId, host, port, false);
-		return null;
+		return new DefaultServiceInstance(this.appName, this.ipAddress, this.port.get(), false);
 	}
 
 	@Override
 	public List<ServiceInstance> getInstances(final String serviceId) {
-		List<ServiceInstance> instances = new ArrayList<>();
+		EndpointsList endpointsList = this.kubernetes.endpoints().withField("metadata.name", serviceId).list();
 
-		addInstancesToList(instances, serviceId);
-
-		return instances;
+		return getInstances(endpointsList);
 	}
 
-	private void addInstancesToList(List<ServiceInstance> instances, String serviceId) {
-		//TODO:
+	private List<ServiceInstance> getInstances(EndpointsList endpointsList) {
+		List<ServiceInstance> instances = new ArrayList<>();
+
+		if (endpointsList != null) {
+			for (Endpoints endpoints : endpointsList.getItems()) {
+				String name = endpoints.getMetadata().getName();
+				String uid = endpoints.getMetadata().getUid();
+
+				for (EndpointSubset subset : endpoints.getSubsets()) {
+					EndpointAddress address = subset.getAddresses().iterator().next();
+					EndpointPort port = subset.getPorts().iterator().next();
+					instances.add(new DefaultServiceInstance(name, address.getIp(), port.getPort(), false, endpoints.getMetadata().getLabels()));
+				}
+			}
+		}
+
+		return instances;
 	}
 
 	public List<ServiceInstance> getAllInstances() {
-		List<ServiceInstance> instances = new ArrayList<>();
-
-		/*TODO: Response<Map<String, List<String>>> services = client .getCatalogServices(QueryParams.DEFAULT);
-		for (String serviceId : services.getValue().keySet()) {
-			addInstancesToList(instances, serviceId);
-		}*/
-		return instances;
+		EndpointsList endpointsList = this.kubernetes.endpoints().list();
+		return getInstances(endpointsList);
 	}
 
 	@Override
 	public List<String> getServices() {
-		return new ArrayList<>(); //TODO:
+		EndpointsList endpointsList = this.kubernetes.endpoints().list();
+		List<String> services = new ArrayList<>();
+
+		if (endpointsList != null) {
+			for (Endpoints endpoints : endpointsList.getItems()) {
+				String name = endpoints.getMetadata().getName();
+				if (!services.contains(name)) {
+					services.add(name);
+				}
+			}
+		}
+		return services;
+	}
+
+
+	@Override
+	public void onApplicationEvent(EmbeddedServletContainerInitializedEvent event) {
+		// TODO: take SSL into account
+		// Don't register the management port as THE port
+		if (!"management".equals(event.getApplicationContext().getNamespace())) {
+			this.port.compareAndSet(0, event.getEmbeddedServletContainer().getPort());
+		}
 	}
 }

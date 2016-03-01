@@ -17,13 +17,47 @@
 
 package org.springframework.cloud.kubernetes.sample;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @EnableDiscoveryClient
 @SpringBootApplication
+@RestController
 public class SampleKubernetesApp {
+
+	@Value("${spring.application.name:kubernetes}")
+	String appName;
+
+	@Autowired
+	LoadBalancerClient lb;
+
+	@Autowired
+	DiscoveryClient discovery;
+
+	@RequestMapping("/")
+	public ServiceInstance choose() {
+		return this.lb.choose(this.appName);
+	}
+
+	@RequestMapping("/list")
+	public List<ServiceInstance> instances() {
+		return this.discovery.getInstances(this.appName);
+	}
+
+	@RequestMapping("/local")
+	public ServiceInstance local() {
+		return this.discovery.getLocalServiceInstance();
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(SampleKubernetesApp.class, args);
