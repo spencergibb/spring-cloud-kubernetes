@@ -19,6 +19,10 @@ Features of Kubernetes
 
 == Spring Cloud Kubernetes Features
 
+- [X] DiscoveryClient implementation
+- [X] Ribbon ServerList implementation
+- [ ] Configuration
+
 == Building
 
 :jdkversion: 1.7
